@@ -33,11 +33,7 @@ jobs:
           fi
           if ! command -v ldid >/dev/null 2>&1; then
             mkdir -p "$HOME/.local/bin"
-            cat > "$HOME/.local/bin/ldid" <<'STUB'
-#!/bin/bash
-for arg in "$@"; do echo "[stub ldid] $arg" >&2; done
-exit 0
-STUB
+            printf '#!/bin/bash\nfor arg in "$@"; do echo "[stub ldid] $arg" >&2; done\nexit 0\n' > "$HOME/.local/bin/ldid"
             chmod +x "$HOME/.local/bin/ldid"
           fi
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"

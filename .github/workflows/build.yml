@@ -33,6 +33,10 @@ jobs:
             git clone --depth=1 https://github.com/theos/headers.git "$THEOS/include"
           fi
 
+      - name: Update theos (fetch vendor/include + vendor/lib)
+        run: |
+          bash "$THEOS/bin/update-theos"
+
       - name: Install ldid
         run: |
           if command -v brew >/dev/null 2>&1; then
@@ -45,23 +49,4 @@ jobs:
           fi
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Build
-        run: |
-          set -e
-          export PATH="$HOME/.local/bin:$PATH"
-          make clean
-          make all FINALPACKAGE=1
-
-      - name: Collect artifact
-        run: |
-          mkdir -p build_output
-          find .theos/obj/ -name "DLGMemor.dylib" -exec cp {} build_output/ \;
-          echo "Build Output Files:"
-          ls -la build_output/
-
-      - name: Upload dylib
-        uses: actions/upload-artifact@v4
-        with:
-          name: DLGMemor-Dylib
-          path: build_output/
-          if-no-files-found: error
+      - n

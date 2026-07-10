@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "UIWindow+DLGMemUI.h"
+#import "category/UIWindow+DLGMemUI.h"
 #import "DLGMemUIViewDelegate.h"
 
 @interface DLGMemUI : NSObject

@@ -19,7 +19,11 @@ DLGMemor_FILES = \
     DLGMemor/DLGMemor/DLGMemor/memui/views/DLGMemUIView.m \
     DLGMemor/DLGMemor/DLGMemor/memui/views/DLGMemUIViewCell.m
 
-DLGMemor_CFLAGS = -fobjc-arc -I$(PWD)/DLGMemor/DLGMemor/DLGMemor/memui -I$(PWD)/DLGMemor/DLGMemor/DLGMemor/mem
+DLGMemor_CFLAGS = -fobjc-arc \
+    -I$(PWD)/DLGMemor/DLGMemor/DLGMemor/memui \
+    -I$(PWD)/DLGMemor/DLGMemor/DLGMemor/memui/views \
+    -I$(PWD)/DLGMemor/DLGMemor/DLGMemor/memui/category \
+    -I$(PWD)/DLGMemor/DLGMemor/DLGMemor/mem
 DLGMemor_OBJCFLAGS = -fobjc-arc -Wno-deprecated-declarations
 DLGMemor_LDFLAGS = -Wl,-segalign,4000
 DLGMemor_FRAMEWORKS = UIKit

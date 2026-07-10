@@ -176,11 +176,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[v(32)]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-32-[v(32)]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vSearch = v;
 }
 
@@ -260,11 +260,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vSearch, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
     [self addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-8-[v]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vOption = v;
 }
 
@@ -338,11 +338,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vOption, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-8-[v]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vResult = v;
 }
 
@@ -399,11 +399,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vResult, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-8-[v(32)]|" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v(36)]|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vMore = v;
 }
 
@@ -497,11 +497,11 @@
     [self.vMemoryContent addSubview:v];
     
     NSDictionary *views = @{@"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
     [self.vMemoryContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[v(32)]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-32-[v(32)]" options:0 metrics:nil views:views];
     [self.vMemoryContent addConstraints:cv];
-    
+
     self.vMemory = v;
 }
 

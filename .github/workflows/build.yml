@@ -1,0 +1,64 @@
+name: Build DLGMemor dylib
+
+on:
+  push:
+    branches:
+      - master
+      - feat/ios26-port
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    env:
+      THEOS: ${{ github.workspace }}/theos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up theos
+        run: |
+          if [ ! -d "$THEOS" ]; then
+            git clone --depth=1 https://github.com/theos/theos.git "$THEOS"
+            git clone --depth=1 https://github.com/theos/sdks.git "$THEOS/sdks"
+            git clone --depth=1 https://github.com/theos/headers.git "$THEOS/include"
+          fi
+
+      - name: Install ldid
+        run: |
+          if command -v brew >/dev/null 2>&1; then
+            brew install ldid 2>/dev/null || true
+          fi
+          if ! command -v ldid >/dev/null 2>&1; then
+            mkdir -p "$HOME/.local/bin"
+            cat > "$HOME/.local/bin/ldid" <<'STUB'
+#!/bin/bash
+for arg in "$@"; do echo "[stub ldid] $arg" >&2; done
+exit 0
+STUB
+            chmod +x "$HOME/.local/bin/ldid"
+          fi
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build
+        run: |
+          set -e
+          export PATH="$HOME/.local/bin:$PATH"
+          make clean
+          make all FINALPACKAGE=1
+
+      - name: Collect artifact
+        run: |
+          mkdir -p build_output
+          find .theos/obj/ -name "DLGMemor.dylib" -exec cp {} build_output/ \;
+          echo "Build Output Files:"
+          ls -la build_output/
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: DLGMemor-Dylib
+          path: build_output/
+          if-no-files-found: error

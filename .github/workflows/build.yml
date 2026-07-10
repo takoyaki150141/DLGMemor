@@ -34,8 +34,7 @@ jobs:
           fi
 
       - name: Update theos (fetch vendor/include + vendor/lib)
-        run: |
-          bash "$THEOS/bin/update-theos"
+        run: bash "$THEOS/bin/update-theos"
 
       - name: Install ldid
         run: |
@@ -44,9 +43,32 @@ jobs:
           fi
           if ! command -v ldid >/dev/null 2>&1; then
             mkdir -p "$HOME/.local/bin"
-            printf '#!/bin/bash\nfor arg in "$@"; do echo "[stub ldid] $arg" >&2; done\nexit 0\n' > "$HOME/.local/bin/ldid"
+            {
+              echo '#!/bin/bash'
+              echo 'for arg in "$@"; do echo "[stub ldid] $arg" >&2; done'
+              echo 'exit 0'
+            } > "$HOME/.local/bin/ldid"
             chmod +x "$HOME/.local/bin/ldid"
           fi
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - n
+      - name: Build
+        run: |
+          set -e
+          export PATH="$HOME/.local/bin:$PATH"
+          make clean
+          make all FINALPACKAGE=1
+
+      - name: Collect artifact
+        run: |
+          mkdir -p build_output
+          find .theos/obj/ -name "DLGMemor.dylib" -exec cp {} build_output/ \;
+          echo "Build Output Files:"
+          ls -la build_output/
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: DLGMemor-Dylib
+          path: build_output/
+          if-no-files-found: error

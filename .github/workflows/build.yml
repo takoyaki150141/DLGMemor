@@ -28,10 +28,8 @@ jobs:
             rm -rf "$THEOS/sdks"
             git clone --depth=1 https://github.com/theos/sdks.git "$THEOS/sdks"
           fi
-          if [ ! -d "$THEOS/include/.git" ]; then
-            rm -rf "$THEOS/include"
-            git clone --depth=1 https://github.com/theos/headers.git "$THEOS/include"
-          fi
+          rm -rf "$THEOS/include"
+          mkdir -p "$THEOS/include"
 
       - name: Update theos (fetch vendor/include + vendor/lib)
         run: bash "$THEOS/bin/update-theos"

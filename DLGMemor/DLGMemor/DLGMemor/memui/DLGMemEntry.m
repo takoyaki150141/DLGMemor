@@ -20,6 +20,7 @@
 
 #import "DLGMemEntry.h"
 #import "DLGMem.h"
+#import <UIKit/UIKit.h>
 
 @implementation DLGMemEntry
 

@@ -7,8 +7,8 @@
 //
 
 #import "DLGMem.h"
-#import "DLGMemUI.h"
-#import "DLGMemUIView.h"
+#import "views/DLGMemUI.h"
+#import "views/DLGMemUIView.h"
 #include "mem.h"
 
 @interface DLGMem () <DLGMemUIViewDelegate> {

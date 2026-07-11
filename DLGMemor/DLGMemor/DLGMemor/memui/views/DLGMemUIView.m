@@ -176,7 +176,7 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-32-[v(32)]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
@@ -260,7 +260,7 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vSearch, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
@@ -338,7 +338,7 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vOption, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
@@ -390,6 +390,7 @@
     [self initResetButton];
     [self initRefreshButton];
     [self initMemoryButton];
+    [self layoutBottomButtonStack];
 }
 
 - (void)initMoreViewContainer {
@@ -399,9 +400,9 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vResult, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v(36)]|" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v(40)]|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
 
     self.vMore = v;
@@ -412,15 +413,8 @@
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"Reset" forState:UIControlStateNormal];
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
     [btn addTarget:self action:@selector(onResetTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.vMore addSubview:btn];
-    
-    NSDictionary *views = @{@"btn":btn};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[btn(64)]" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:cv];
-    
     self.btnReset = btn;
 }
 
@@ -429,15 +423,8 @@
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"Refresh" forState:UIControlStateNormal];
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
     [btn addTarget:self action:@selector(onRefreshTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.vMore addSubview:btn];
-    
-    NSDictionary *views = @{@"btn":btn};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[btn(64)]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:cv];
-    
     self.btnRefresh = btn;
 }
 
@@ -446,16 +433,44 @@
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"Memory" forState:UIControlStateNormal];
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
     [btn addTarget:self action:@selector(onMemoryTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.vMore addSubview:btn];
-    
-    NSDictionary *views = @{@"reset":self.btnReset, @"btn":btn, @"refresh":self.btnRefresh};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[reset][btn][refresh]" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:cv];
-    
     self.btnMemory = btn;
+}
+
+// Lay out the three bottom buttons as a tight, centered group via a
+// horizontal UIStackView instead of letting them span the full width
+// of vMore.  Spacing=6, equal widths, 240pt total width.
+- (void)layoutBottomButtonStack {
+    if (self.btnReset == nil || self.btnMemory == nil || self.btnRefresh == nil) return;
+
+    UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[
+        self.btnReset, self.btnMemory, self.btnRefresh
+    ]];
+    stack.translatesAutoresizingMaskIntoConstraints = NO;
+    stack.axis = UILayoutConstraintAxisHorizontal;
+    stack.distribution = UIStackViewDistributionFillEqually;
+    stack.spacing = 6;
+    [self.vMore addSubview:stack];
+
+    NSDictionary *views = @{@"stack":stack};
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[stack]|"
+                                                          options:0 metrics:nil views:views];
+    [self.vMore addConstraints:cv];
+    [self.vMore addConstraint:[NSLayoutConstraint constraintWithItem:stack
+                                                          attribute:NSLayoutAttributeCenterX
+                                                          relatedBy:NSLayoutRelationEqual
+                                                             toItem:self.vMore
+                                                          attribute:NSLayoutAttributeCenterX
+                                                         multiplier:1.0
+                                                           constant:0]];
+    [self.vMore addConstraint:[NSLayoutConstraint constraintWithItem:stack
+                                                          attribute:NSLayoutAttributeWidth
+                                                          relatedBy:NSLayoutRelationEqual
+                                                             toItem:nil
+                                                          attribute:NSLayoutAttributeNotAnAttribute
+                                                         multiplier:1.0
+                                                           constant:240]];
 }
 
 #pragma mark - Init Memory Content View
@@ -497,7 +512,7 @@
     [self.vMemoryContent addSubview:v];
     
     NSDictionary *views = @{@"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-20-[v]-20-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vMemoryContent addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-32-[v(32)]" options:0 metrics:nil views:views];
     [self.vMemoryContent addConstraints:cv];

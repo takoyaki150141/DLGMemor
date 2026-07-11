@@ -13,7 +13,7 @@
 @interface DLGMemUI : NSObject
 
 + (void)addDLGMemUIView:(id<DLGMemUIViewDelegate>)delegate;
-+ (void)addDLGMemUIViewToWindow:(UIWindow *)window withDelegate:(id<DLGMemUIViewDelegate>)delegate;
++ (void)addDLGMemUIViewToHostWindow:(UIWindow *)window withDelegate:(id<DLGMemUIViewDelegate>)delegate;
 + (void)removeDLGMemUIView;
 
 @end

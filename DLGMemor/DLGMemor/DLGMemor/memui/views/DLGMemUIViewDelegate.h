@@ -40,5 +40,8 @@ typedef enum : NSUInteger {
 - (void)DLGMemUIRefresh;
 - (void)DLGMemUIReset;
 - (NSString *)DLGMemUIMemory:(NSString *)address size:(NSString *)size;
+- (void)DLGMemUIPinAddress:(unsigned long long)address type:(DLGMemValueType)type;
+- (void)DLGMemUIUnpinAddress:(unsigned long long)address;
+- (void)DLGMemUIRefreshPinned;
 
 @end

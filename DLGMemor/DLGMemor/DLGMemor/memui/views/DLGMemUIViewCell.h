@@ -15,6 +15,7 @@
 
 - (void)DLGMemUIViewCellModify:(NSString *)address value:(NSString *)value;
 - (void)DLGMemUIViewCellViewMemory:(NSString *)address;
+- (void)DLGMemUIViewCellPin:(NSString *)address;
 
 @end
 
@@ -25,5 +26,6 @@
 @property (nonatomic) NSString *address;
 @property (nonatomic) NSString *value;
 @property (nonatomic) BOOL modifying;
+@property (nonatomic) BOOL pinned;
 
 @end

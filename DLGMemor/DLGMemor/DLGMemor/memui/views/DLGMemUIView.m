@@ -34,6 +34,7 @@
 
 @property (nonatomic) UIView *vResult;
 @property (nonatomic) UILabel *lblResult;
+@property (nonatomic) UISegmentedControl *scResultMode;
 @property (nonatomic) UITableView *tvResult;
 
 @property (nonatomic) UIView *vMore;
@@ -337,6 +338,7 @@
 - (void)initResultView {
     [self initResultViewContainer];
     [self initResultLabel];
+    [self initResultModeControl];
     [self initResultTableView];
 }
 
@@ -363,14 +365,32 @@
     lbl.textColor = [UIColor whiteColor];
     lbl.text = @"Result";
     [self.vResult addSubview:lbl];
-    
+
     NSDictionary *views = @{@"lbl":lbl};
     NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[lbl]|" options:0 metrics:nil views:views];
     [self.vResult addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[lbl]" options:0 metrics:nil views:views];
     [self.vResult addConstraints:cv];
-    
+
     self.lblResult = lbl;
+}
+
+- (void)initResultModeControl {
+    UISegmentedControl *sc = [[UISegmentedControl alloc] initWithItems:@[@"Results", @"Pinned"]];
+    sc.translatesAutoresizingMaskIntoConstraints = NO;
+    [sc setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]} forState:UIControlStateNormal];
+    [sc setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]} forState:UIControlStateSelected];
+    sc.selectedSegmentIndex = 0;
+    [sc addTarget:self action:@selector(onResultModeChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.vResult addSubview:sc];
+
+    NSDictionary *views = @{@"lbl":self.lblResult, @"sc":sc};
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[sc]|" options:0 metrics:nil views:views];
+    [self.vResult addConstraints:ch];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[lbl]-4-[sc]" options:0 metrics:nil views:views];
+    [self.vResult addConstraints:cv];
+
+    self.scResultMode = sc;
 }
 
 - (void)initResultTableView {
@@ -382,13 +402,13 @@
     tv.separatorStyle = UITableViewCellSeparatorStyleNone;
     tv.indicatorStyle = UIScrollViewIndicatorStyleWhite;
     [self.vResult addSubview:tv];
-    
-    NSDictionary *views = @{@"lbl":self.lblResult, @"tv":tv};
+
+    NSDictionary *views = @{@"sc":self.scResultMode, @"tv":tv};
     NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[tv]|" options:0 metrics:nil views:views];
     [self.vResult addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[lbl]-8-[tv]|" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[sc]-4-[tv]|" options:0 metrics:nil views:views];
     [self.vResult addConstraints:cv];
-    
+
     [tv registerClass:[DLGMemUIViewCell class] forCellReuseIdentifier:DLGMemUIViewCellID];
     self.tvResult = tv;
 }
@@ -640,7 +660,9 @@
 #pragma mark - Setter / Getter
 - (void)setChainCount:(NSInteger)chainCount {
     _chainCount = chainCount;
-    self.lblResult.text = [NSString stringWithFormat:@"Found %lld.", (long long)chainCount];
+    if (!self.pinnedMode) {
+        self.lblResult.text = [NSString stringWithFormat:@"Found %lld.", (long long)chainCount];
+    }
     if (chainCount > 0) {
         self.lcUValueTypeTopMargin.constant = -CGRectGetHeight(self.scUValueType.frame) * 2;
         self.scUValueType.hidden = YES;
@@ -649,6 +671,36 @@
         self.lcUValueTypeTopMargin.constant = 8;
         self.scUValueType.hidden = NO;
         self.scSValueType.hidden = NO;
+    }
+}
+
+- (void)setPinnedCount:(NSInteger)pinnedCount {
+    _pinnedCount = pinnedCount;
+    if (self.pinnedMode) {
+        self.lblResult.text = [NSString stringWithFormat:@"Pinned %lld.", (long long)pinnedCount];
+    }
+}
+
+- (void)setPinnedMode:(BOOL)pinnedMode {
+    _pinnedMode = pinnedMode;
+    if (pinnedMode) {
+        self.lblResult.text = [NSString stringWithFormat:@"Pinned %lld.", (long long)self.pinnedCount];
+    } else {
+        self.lblResult.text = [NSString stringWithFormat:@"Found %lld.", (long long)self.chainCount];
+    }
+    [self.tvResult reloadData];
+}
+
+- (void)setPinnedChain:(search_result_chain_t)pinnedChain {
+    _pinnedChain = pinnedChain;
+    if (self.pinnedMode) {
+        [self.tvResult reloadData];
+    }
+}
+
+- (void)reloadPinnedTable {
+    if (self.pinnedMode) {
+        [self.tvResult reloadData];
     }
 }
 
@@ -733,6 +785,10 @@
 
 - (void)onComparisonChanged:(id)sender {
     self.selectedComparisonIndex = self.scComparison.selectedSegmentIndex;
+}
+
+- (void)onResultModeChanged:(id)sender {
+    self.pinnedMode = (self.scResultMode.selectedSegmentIndex == 1);
 }
 
 - (void)onValueTypeChanged:(id)sender {
@@ -879,6 +935,10 @@
 
 #pragma mark - UITableViewDataSource
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (self.pinnedMode) {
+        if (self.pinnedCount > MaxResultCount) return 0;
+        return self.pinnedCount;
+    }
     if (self.chainCount > MaxResultCount) return 0;
     return self.chainCount;
 }
@@ -891,15 +951,33 @@
     DLGMemUIViewCell *cell = [tableView dequeueReusableCellWithIdentifier:DLGMemUIViewCellID forIndexPath:indexPath];
     cell.delegate = self;
     cell.textFieldDelegate = self;
-    
+
     NSInteger index = indexPath.row;
-    search_result_t result = chainArray[index];
+    search_result_chain_t srcChain = self.pinnedMode ? self.pinnedChain : self.chain;
+    search_result_t result = [self resultAtIndex:index inChain:srcChain];
+    if (result == NULL) return cell;
+
     NSString *address = [NSString stringWithFormat:@"%llX", result->address];
     NSString *value = [self valueStringFromResult:result];
     cell.address = address;
     cell.value = value;
     cell.modifying = NO;
+    cell.pinned = self.pinnedMode;  // in Pinned mode, show ×; in Results, show P
     return cell;
+}
+
+// Walk the chain to the Nth result. The chain is a singly-linked
+// list so this is O(n); n is bounded by MaxResultCount (500) for
+// the visible rows.
+- (search_result_t)resultAtIndex:(NSInteger)index inChain:(search_result_chain_t)chain {
+    search_result_chain_t c = chain;
+    NSInteger i = 0;
+    while (c != NULL && c->result != NULL) {
+        if (i == index) return c->result;
+        i++;
+        c = c->next;
+    }
+    return NULL;
 }
 
 #pragma mark - UITableViewDelegate
@@ -922,6 +1000,22 @@
 
 - (void)DLGMemUIViewCellViewMemory:(NSString *)address {
     [self showMemory:address];
+}
+
+- (void)DLGMemUIViewCellPin:(NSString *)address {
+    mach_vm_address_t a = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:address];
+    if (![scanner scanHexLongLong:&a]) return;
+    if (self.pinnedMode) {
+        if ([self.delegate respondsToSelector:@selector(DLGMemUIUnpinAddress:)]) {
+            [self.delegate DLGMemUIUnpinAddress:a];
+        }
+    } else {
+        DLGMemValueType type = [self currentValueType];
+        if ([self.delegate respondsToSelector:@selector(DLGMemUIPinAddress:type:)]) {
+            [self.delegate DLGMemUIPinAddress:a type:type];
+        }
+    }
 }
 
 #pragma mark - Utils

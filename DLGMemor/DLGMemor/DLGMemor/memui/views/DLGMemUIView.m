@@ -84,9 +84,18 @@
 
 - (void)initVars {
     CGRect screenBounds = [UIScreen mainScreen].bounds;
-    self.rcExpandedFrame = screenBounds;
+    // Expanded state is a centered floating window, not full-screen.
+    // Width capped at 420pt (typical iPad split-view width), height
+    // capped at 640pt (enough for the 4 search/option/result/more
+    // rows + table view). Margins of 20pt on the sides, 60pt at
+    // the top/bottom to clear the status bar / home indicator.
+    CGFloat w = MIN(420.0, screenBounds.size.width - 40.0);
+    CGFloat h = MIN(screenBounds.size.height - 100.0, 640.0);
+    self.rcExpandedFrame = CGRectMake((screenBounds.size.width - w) / 2.0,
+                                      (screenBounds.size.height - h) / 2.0,
+                                      w, h);
     self.rcCollapsedFrame = CGRectMake(0, 0, DLG_DEBUG_CONSOLE_VIEW_SIZE, DLG_DEBUG_CONSOLE_VIEW_SIZE);
-    
+
     _shouldNotBeDragged = NO;
     _expanded = NO;
     self.isUnsignedValueType = NO;
@@ -781,8 +790,12 @@
     frame.origin = self.frame.origin;
     self.rcCollapsedFrame = frame;
     self.btnConsole.hidden = YES;
-    self.layer.cornerRadius = 0;
-    [UIView animateWithDuration:0.2f
+    self.layer.cornerRadius = 18.0;
+    self.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.layer.shadowOpacity = 0.45;
+    self.layer.shadowOffset = CGSizeMake(0, 6);
+    self.layer.shadowRadius = 14.0;
+    [UIView animateWithDuration:0.25f
                           delay:0.0f
                         options:UIViewAnimationOptionBeginFromCurrentState
                      animations:^{
@@ -795,7 +808,7 @@
                          self.vShowingContent.hidden = NO;
                          self->_expanded = YES;
                      }];
-    
+
     [self addGesture];
 }
 
@@ -805,10 +818,11 @@
     frame.origin = self.frame.origin;
     self.rcExpandedFrame = frame;
     self.layer.cornerRadius = CGRectGetWidth(self.rcCollapsedFrame) / 2;
+    self.layer.shadowOpacity = 0.0;
     self.vShowingContent.hidden = YES;
     [self.tfFocused resignFirstResponder];
     [self removeGesture];
-    [UIView animateWithDuration:0.2f
+    [UIView animateWithDuration:0.25f
                           delay:0.0f
                         options:UIViewAnimationOptionBeginFromCurrentState
                      animations:^{

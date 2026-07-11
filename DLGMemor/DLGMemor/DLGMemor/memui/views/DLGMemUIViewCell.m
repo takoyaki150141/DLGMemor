@@ -15,6 +15,7 @@
 @property (nonatomic) UITextField *tfValue;
 @property (nonatomic) UIButton *btnMod;
 @property (nonatomic) UIButton *btnViewMemory;
+@property (nonatomic) UIButton *btnPin;
 
 @end
 
@@ -64,6 +65,7 @@
     [self initAddressLabel];
     [self initValueLabel];
     [self initViewMemoryButton];
+    [self initPinButton];
     [self initModButton];
     [self initValueInput];
 }
@@ -141,14 +143,24 @@
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [btn addTarget:self action:@selector(onModButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.contentView addSubview:btn];
-    
-    NSDictionary *views = @{@"lbl":self.lblValue, @"btn":btn, @"vm":self.btnViewMemory};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[lbl]-8-[btn(32)]-8-[vm]|" options:0 metrics:nil views:views];
+
+    NSDictionary *views = @{@"lbl":self.lblValue, @"btn":btn, @"vm":self.btnViewMemory, @"pin":self.btnPin};
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[lbl]-8-[pin(32)]-4-[btn(32)]-4-[vm]|" options:0 metrics:nil views:views];
     [self.contentView addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
     [self.contentView addConstraints:cv];
-    
+
     self.btnMod = btn;
+}
+
+- (void)initPinButton {
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
+    btn.translatesAutoresizingMaskIntoConstraints = NO;
+    [btn setTitle:@"P" forState:UIControlStateNormal];
+    [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [btn addTarget:self action:@selector(onPinButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentView addSubview:btn];
+    self.btnPin = btn;
 }
 
 - (void)initValueInput {
@@ -197,6 +209,12 @@
     [self.btnMod setTitle:modifying ? @"OK" : @"M" forState:UIControlStateNormal];
 }
 
+- (void)setPinned:(BOOL)pinned {
+    _pinned = pinned;
+    [self.btnPin setTitle:pinned ? @"x" : @"P" forState:UIControlStateNormal];
+    [self.btnPin setTitleColor:pinned ? [UIColor systemRedColor] : [UIColor whiteColor] forState:UIControlStateNormal];
+}
+
 - (void)setTextFieldDelegate:(id<UITextFieldDelegate>)textFieldDelegate {
     _textFieldDelegate = textFieldDelegate;
     self.tfValue.delegate = textFieldDelegate;
@@ -219,6 +237,12 @@
 - (void)onViewMemoryButtonTapped:(id)sender {
     if ([self.delegate respondsToSelector:@selector(DLGMemUIViewCellViewMemory:)]) {
         [self.delegate DLGMemUIViewCellViewMemory:self.address];
+    }
+}
+
+- (void)onPinButtonTapped:(id)sender {
+    if ([self.delegate respondsToSelector:@selector(DLGMemUIViewCellPin:)]) {
+        [self.delegate DLGMemUIViewCellPin:self.address];
     }
 }
 

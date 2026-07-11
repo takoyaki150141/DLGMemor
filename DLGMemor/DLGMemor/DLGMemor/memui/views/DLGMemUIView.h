@@ -25,8 +25,14 @@
 @property (nonatomic) NSInteger chainCount;
 @property (nonatomic) search_result_chain_t chain;
 
+// Point-scan / pinned chain
+@property (nonatomic) NSInteger pinnedCount;
+@property (nonatomic) search_result_chain_t pinnedChain;
+@property (nonatomic) BOOL pinnedMode;
+
 + (instancetype)instance;
 - (void)doExpand;
 - (void)doCollapse;
+- (void)reloadPinnedTable;
 
 @end

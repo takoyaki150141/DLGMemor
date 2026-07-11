@@ -34,6 +34,7 @@
 
 @property (nonatomic) UIView *vResult;
 @property (nonatomic) UILabel *lblResult;
+@property (nonatomic) UISegmentedControl *scResultMode;
 @property (nonatomic) UITableView *tvResult;
 
 @property (nonatomic) UIView *vMore;
@@ -84,9 +85,18 @@
 
 - (void)initVars {
     CGRect screenBounds = [UIScreen mainScreen].bounds;
-    self.rcExpandedFrame = screenBounds;
+    // Expanded state is a centered floating window, not full-screen.
+    // Width capped at 420pt (typical iPad split-view width), height
+    // capped at 640pt (enough for the 4 search/option/result/more
+    // rows + table view). Margins of 20pt on the sides, 60pt at
+    // the top/bottom to clear the status bar / home indicator.
+    CGFloat w = MIN(420.0, screenBounds.size.width - 40.0);
+    CGFloat h = MIN(screenBounds.size.height - 100.0, 640.0);
+    self.rcExpandedFrame = CGRectMake((screenBounds.size.width - w) / 2.0,
+                                      (screenBounds.size.height - h) / 2.0,
+                                      w, h);
     self.rcCollapsedFrame = CGRectMake(0, 0, DLG_DEBUG_CONSOLE_VIEW_SIZE, DLG_DEBUG_CONSOLE_VIEW_SIZE);
-    
+
     _shouldNotBeDragged = NO;
     _expanded = NO;
     self.isUnsignedValueType = NO;
@@ -176,11 +186,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[v(32)]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-32-[v(32)]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vSearch = v;
 }
 
@@ -260,11 +270,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vSearch, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-8-[v]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vOption = v;
 }
 
@@ -328,6 +338,7 @@
 - (void)initResultView {
     [self initResultViewContainer];
     [self initResultLabel];
+    [self initResultModeControl];
     [self initResultTableView];
 }
 
@@ -338,11 +349,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vOption, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-8-[v]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v]" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vResult = v;
 }
 
@@ -354,14 +365,32 @@
     lbl.textColor = [UIColor whiteColor];
     lbl.text = @"Result";
     [self.vResult addSubview:lbl];
-    
+
     NSDictionary *views = @{@"lbl":lbl};
     NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[lbl]|" options:0 metrics:nil views:views];
     [self.vResult addConstraints:ch];
     NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[lbl]" options:0 metrics:nil views:views];
     [self.vResult addConstraints:cv];
-    
+
     self.lblResult = lbl;
+}
+
+- (void)initResultModeControl {
+    UISegmentedControl *sc = [[UISegmentedControl alloc] initWithItems:@[@"Results", @"Pinned"]];
+    sc.translatesAutoresizingMaskIntoConstraints = NO;
+    [sc setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]} forState:UIControlStateNormal];
+    [sc setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]} forState:UIControlStateSelected];
+    sc.selectedSegmentIndex = 0;
+    [sc addTarget:self action:@selector(onResultModeChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.vResult addSubview:sc];
+
+    NSDictionary *views = @{@"lbl":self.lblResult, @"sc":sc};
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[sc]|" options:0 metrics:nil views:views];
+    [self.vResult addConstraints:ch];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[lbl]-4-[sc]" options:0 metrics:nil views:views];
+    [self.vResult addConstraints:cv];
+
+    self.scResultMode = sc;
 }
 
 - (void)initResultTableView {
@@ -373,13 +402,13 @@
     tv.separatorStyle = UITableViewCellSeparatorStyleNone;
     tv.indicatorStyle = UIScrollViewIndicatorStyleWhite;
     [self.vResult addSubview:tv];
-    
-    NSDictionary *views = @{@"lbl":self.lblResult, @"tv":tv};
+
+    NSDictionary *views = @{@"sc":self.scResultMode, @"tv":tv};
     NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[tv]|" options:0 metrics:nil views:views];
     [self.vResult addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[lbl]-8-[tv]|" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[sc]-4-[tv]|" options:0 metrics:nil views:views];
     [self.vResult addConstraints:cv];
-    
+
     [tv registerClass:[DLGMemUIViewCell class] forCellReuseIdentifier:DLGMemUIViewCellID];
     self.tvResult = tv;
 }
@@ -390,6 +419,7 @@
     [self initResetButton];
     [self initRefreshButton];
     [self initMemoryButton];
+    [self layoutBottomButtonStack];
 }
 
 - (void)initMoreViewContainer {
@@ -399,11 +429,11 @@
     [self.vContent addSubview:v];
     
     NSDictionary *views = @{@"vv":self.vResult, @"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-8-[v(32)]|" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[vv]-12-[v(40)]|" options:0 metrics:nil views:views];
     [self.vContent addConstraints:cv];
-    
+
     self.vMore = v;
 }
 
@@ -412,15 +442,8 @@
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"Reset" forState:UIControlStateNormal];
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
     [btn addTarget:self action:@selector(onResetTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.vMore addSubview:btn];
-    
-    NSDictionary *views = @{@"btn":btn};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[btn(64)]" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:cv];
-    
     self.btnReset = btn;
 }
 
@@ -429,15 +452,8 @@
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"Refresh" forState:UIControlStateNormal];
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
     [btn addTarget:self action:@selector(onRefreshTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.vMore addSubview:btn];
-    
-    NSDictionary *views = @{@"btn":btn};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[btn(64)]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:cv];
-    
     self.btnRefresh = btn;
 }
 
@@ -446,16 +462,44 @@
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"Memory" forState:UIControlStateNormal];
     [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
     [btn addTarget:self action:@selector(onMemoryTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.vMore addSubview:btn];
-    
-    NSDictionary *views = @{@"reset":self.btnReset, @"btn":btn, @"refresh":self.btnRefresh};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[reset][btn][refresh]" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[btn]|" options:0 metrics:nil views:views];
-    [self.vMore addConstraints:cv];
-    
     self.btnMemory = btn;
+}
+
+// Lay out the three bottom buttons as a tight, centered group via a
+// horizontal UIStackView instead of letting them span the full width
+// of vMore.  Spacing=6, equal widths, 240pt total width.
+- (void)layoutBottomButtonStack {
+    if (self.btnReset == nil || self.btnMemory == nil || self.btnRefresh == nil) return;
+
+    UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[
+        self.btnReset, self.btnMemory, self.btnRefresh
+    ]];
+    stack.translatesAutoresizingMaskIntoConstraints = NO;
+    stack.axis = UILayoutConstraintAxisHorizontal;
+    stack.distribution = UIStackViewDistributionFillEqually;
+    stack.spacing = 6;
+    [self.vMore addSubview:stack];
+
+    NSDictionary *views = @{@"stack":stack};
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[stack]|"
+                                                          options:0 metrics:nil views:views];
+    [self.vMore addConstraints:cv];
+    [self.vMore addConstraint:[NSLayoutConstraint constraintWithItem:stack
+                                                          attribute:NSLayoutAttributeCenterX
+                                                          relatedBy:NSLayoutRelationEqual
+                                                             toItem:self.vMore
+                                                          attribute:NSLayoutAttributeCenterX
+                                                         multiplier:1.0
+                                                           constant:0]];
+    [self.vMore addConstraint:[NSLayoutConstraint constraintWithItem:stack
+                                                          attribute:NSLayoutAttributeWidth
+                                                          relatedBy:NSLayoutRelationEqual
+                                                             toItem:nil
+                                                          attribute:NSLayoutAttributeNotAnAttribute
+                                                         multiplier:1.0
+                                                           constant:240]];
 }
 
 #pragma mark - Init Memory Content View
@@ -497,11 +541,11 @@
     [self.vMemoryContent addSubview:v];
     
     NSDictionary *views = @{@"v":v};
-    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-8-[v]-8-|" options:0 metrics:nil views:views];
+    NSArray *ch = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-28-[v]-28-|" options:0 metrics:nil views:views];
     [self.vMemoryContent addConstraints:ch];
-    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[v(32)]" options:0 metrics:nil views:views];
+    NSArray *cv = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-32-[v(32)]" options:0 metrics:nil views:views];
     [self.vMemoryContent addConstraints:cv];
-    
+
     self.vMemory = v;
 }
 
@@ -616,7 +660,9 @@
 #pragma mark - Setter / Getter
 - (void)setChainCount:(NSInteger)chainCount {
     _chainCount = chainCount;
-    self.lblResult.text = [NSString stringWithFormat:@"Found %lld.", (long long)chainCount];
+    if (!self.pinnedMode) {
+        self.lblResult.text = [NSString stringWithFormat:@"Found %lld.", (long long)chainCount];
+    }
     if (chainCount > 0) {
         self.lcUValueTypeTopMargin.constant = -CGRectGetHeight(self.scUValueType.frame) * 2;
         self.scUValueType.hidden = YES;
@@ -625,6 +671,36 @@
         self.lcUValueTypeTopMargin.constant = 8;
         self.scUValueType.hidden = NO;
         self.scSValueType.hidden = NO;
+    }
+}
+
+- (void)setPinnedCount:(NSInteger)pinnedCount {
+    _pinnedCount = pinnedCount;
+    if (self.pinnedMode) {
+        self.lblResult.text = [NSString stringWithFormat:@"Pinned %lld.", (long long)pinnedCount];
+    }
+}
+
+- (void)setPinnedMode:(BOOL)pinnedMode {
+    _pinnedMode = pinnedMode;
+    if (pinnedMode) {
+        self.lblResult.text = [NSString stringWithFormat:@"Pinned %lld.", (long long)self.pinnedCount];
+    } else {
+        self.lblResult.text = [NSString stringWithFormat:@"Found %lld.", (long long)self.chainCount];
+    }
+    [self.tvResult reloadData];
+}
+
+- (void)setPinnedChain:(search_result_chain_t)pinnedChain {
+    _pinnedChain = pinnedChain;
+    if (self.pinnedMode) {
+        [self.tvResult reloadData];
+    }
+}
+
+- (void)reloadPinnedTable {
+    if (self.pinnedMode) {
+        [self.tvResult reloadData];
     }
 }
 
@@ -711,6 +787,10 @@
     self.selectedComparisonIndex = self.scComparison.selectedSegmentIndex;
 }
 
+- (void)onResultModeChanged:(id)sender {
+    self.pinnedMode = (self.scResultMode.selectedSegmentIndex == 1);
+}
+
 - (void)onValueTypeChanged:(id)sender {
     BOOL isUnsigned = (sender == self.scUValueType);
     UISegmentedControl *sc = isUnsigned ? self.scUValueType : self.scSValueType;
@@ -766,8 +846,12 @@
     frame.origin = self.frame.origin;
     self.rcCollapsedFrame = frame;
     self.btnConsole.hidden = YES;
-    self.layer.cornerRadius = 0;
-    [UIView animateWithDuration:0.2f
+    self.layer.cornerRadius = 18.0;
+    self.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.layer.shadowOpacity = 0.45;
+    self.layer.shadowOffset = CGSizeMake(0, 6);
+    self.layer.shadowRadius = 14.0;
+    [UIView animateWithDuration:0.25f
                           delay:0.0f
                         options:UIViewAnimationOptionBeginFromCurrentState
                      animations:^{
@@ -780,7 +864,7 @@
                          self.vShowingContent.hidden = NO;
                          self->_expanded = YES;
                      }];
-    
+
     [self addGesture];
 }
 
@@ -790,10 +874,11 @@
     frame.origin = self.frame.origin;
     self.rcExpandedFrame = frame;
     self.layer.cornerRadius = CGRectGetWidth(self.rcCollapsedFrame) / 2;
+    self.layer.shadowOpacity = 0.0;
     self.vShowingContent.hidden = YES;
     [self.tfFocused resignFirstResponder];
     [self removeGesture];
-    [UIView animateWithDuration:0.2f
+    [UIView animateWithDuration:0.25f
                           delay:0.0f
                         options:UIViewAnimationOptionBeginFromCurrentState
                      animations:^{
@@ -850,6 +935,10 @@
 
 #pragma mark - UITableViewDataSource
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (self.pinnedMode) {
+        if (self.pinnedCount > MaxResultCount) return 0;
+        return self.pinnedCount;
+    }
     if (self.chainCount > MaxResultCount) return 0;
     return self.chainCount;
 }
@@ -862,15 +951,33 @@
     DLGMemUIViewCell *cell = [tableView dequeueReusableCellWithIdentifier:DLGMemUIViewCellID forIndexPath:indexPath];
     cell.delegate = self;
     cell.textFieldDelegate = self;
-    
+
     NSInteger index = indexPath.row;
-    search_result_t result = chainArray[index];
+    search_result_chain_t srcChain = self.pinnedMode ? self.pinnedChain : self.chain;
+    search_result_t result = [self resultAtIndex:index inChain:srcChain];
+    if (result == NULL) return cell;
+
     NSString *address = [NSString stringWithFormat:@"%llX", result->address];
     NSString *value = [self valueStringFromResult:result];
     cell.address = address;
     cell.value = value;
     cell.modifying = NO;
+    cell.pinned = self.pinnedMode;  // in Pinned mode, show ×; in Results, show P
     return cell;
+}
+
+// Walk the chain to the Nth result. The chain is a singly-linked
+// list so this is O(n); n is bounded by MaxResultCount (500) for
+// the visible rows.
+- (search_result_t)resultAtIndex:(NSInteger)index inChain:(search_result_chain_t)chain {
+    search_result_chain_t c = chain;
+    NSInteger i = 0;
+    while (c != NULL && c->result != NULL) {
+        if (i == index) return c->result;
+        i++;
+        c = c->next;
+    }
+    return NULL;
 }
 
 #pragma mark - UITableViewDelegate
@@ -893,6 +1000,22 @@
 
 - (void)DLGMemUIViewCellViewMemory:(NSString *)address {
     [self showMemory:address];
+}
+
+- (void)DLGMemUIViewCellPin:(NSString *)address {
+    mach_vm_address_t a = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:address];
+    if (![scanner scanHexLongLong:&a]) return;
+    if (self.pinnedMode) {
+        if ([self.delegate respondsToSelector:@selector(DLGMemUIUnpinAddress:)]) {
+            [self.delegate DLGMemUIUnpinAddress:a];
+        }
+    } else {
+        DLGMemValueType type = [self currentValueType];
+        if ([self.delegate respondsToSelector:@selector(DLGMemUIPinAddress:type:)]) {
+            [self.delegate DLGMemUIPinAddress:a type:type];
+        }
+    }
 }
 
 #pragma mark - Utils
